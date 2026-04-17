@@ -8,13 +8,16 @@
 //
 // Example single entry (conceptual):
 //   "100644 hello.txt\0" followed by 32 raw bytes of SHA-256
-
+#include "index.h"
 #include "tree.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+
+// forward declare
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
@@ -114,23 +117,11 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
     return 0;
 }
 
+// ─── TODO: Implement these ──────────────────────────────────────────────────
 
 // Build a tree hierarchy from the current index and write all tree
 // objects to the object store.
-//
-// HINTS - Useful functions and concepts for this phase:
-//   - index_load      : load the staged files into memory
-//   - strchr          : find the first '/' in a path to separate directories from files
-//   - strncmp         : compare prefixes to group files belonging to the same subdirectory
-//   - Recursion       : you will likely want to create a recursive helper function 
-//                       (e.g., `write_tree_level(entries, count, depth)`) to handle nested dirs.
-//   - tree_serialize  : convert your populated Tree struct into a binary buffer
-//   - object_write    : save that binary buffer to the store as OBJ_TREE
-//
-// Returns 0 on success, -1 on error.
-#include "index.h"  // add at top of tree.c
 
-// Helper: write one level of the tree
 static int write_tree_level(IndexEntry *entries, int count,
                              const char *prefix, ObjectID *id_out) {
     Tree tree;
@@ -183,7 +174,16 @@ static int write_tree_level(IndexEntry *entries, int count,
     free(tdata);
     return rc;
 }
-
+// HINTS - Useful functions and concepts for this phase:
+//   - index_load      : load the staged files into memory
+//   - strchr          : find the first '/' in a path to separate directories from files
+//   - strncmp         : compare prefixes to group files belonging to the same subdirectory
+//   - Recursion       : you will likely want to create a recursive helper function 
+//                       (e.g., `write_tree_level(entries, count, depth)`) to handle nested dirs.
+//   - tree_serialize  : convert your populated Tree struct into a binary buffer
+//   - object_write    : save that binary buffer to the store as OBJ_TREE
+//
+// Returns 0 on success, -1 on error.
 int tree_from_index(ObjectID *id_out) {
     Index index;
     index.count = 0;
